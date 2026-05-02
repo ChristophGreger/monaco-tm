@@ -167,6 +167,75 @@ state done:
     ]);
   });
 
+  it('expands compact condition alternatives into shared-action transitions', () => {
+    const machine = expectValidMachine(`tapes: 3
+blank: _
+alphabet: {0, 1, _}
+input: ""
+start: q0
+
+state q0:
+  on [1/1/*, 0/0/0] -> move R/R/S; goto done;
+
+state done:
+`);
+
+    expect(machine.transitions).toHaveLength(2);
+    expect(machine.transitions.map((transition) => transition.read)).toEqual([
+      [['1'], ['1'], 'any'],
+      [['0'], ['0'], ['0']],
+    ]);
+    expect(machine.transitions.every((transition) => transition.to === 'done')).toBe(true);
+    expect(machine.transitions.every((transition) => transition.move.join('/') === 'R/R/S')).toBe(true);
+  });
+
+  it('expands readable or alternatives into shared-action transitions', () => {
+    const machine = expectValidMachine(`tapes: 3
+blank: _
+alphabet: {0, 1, _}
+input: ""
+start: q0
+
+state q0:
+  if (t1 = 1 and t2 = 1) or (t1 = 0 and t2 = 0) then move R/R/S; goto done;
+
+state done:
+`);
+
+    expect(machine.transitions).toHaveLength(2);
+    expect(machine.transitions.map((transition) => transition.read)).toEqual([
+      [['1'], ['1'], 'any'],
+      [['0'], ['0'], 'any'],
+    ]);
+    expect(machine.transitions.every((transition) => transition.to === 'done')).toBe(true);
+  });
+
+  it('combines condition alternatives with choose branches', () => {
+    const machine = expectValidMachine(`tapes: 1
+blank: _
+alphabet: {0, 1, _}
+input: ""
+start: generate
+
+state generate:
+  on [0, 1] -> choose {
+    write 0; move R;
+    write 1; move R;
+  }
+`);
+
+    expect(machine.transitions).toHaveLength(4);
+    expect(machine.transitions.map((transition) => ({
+      read: transition.read,
+      write: transition.write,
+    }))).toEqual([
+      { read: [['0']], write: ['0'] },
+      { read: [['1']], write: ['0'] },
+      { read: [['0']], write: ['1'] },
+      { read: [['1']], write: ['1'] },
+    ]);
+  });
+
   it('keeps repeated matching rules as nondeterministic alternatives', () => {
     const machine = expectValidMachine(`tapes: 1
 blank: _

@@ -269,6 +269,66 @@ state q0:
 `, ['PARSE_UNEXPECTED_TOKEN']);
   });
 
+  it('reports compact condition alternatives without a closing bracket', () => {
+    expectDiagnosticCodes(`tapes: 2
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  on [0/_, _/_ -> move S/S;
+`, ['PARSE_UNEXPECTED_TOKEN']);
+  });
+
+  it('reports empty compact condition alternative lists', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  on [] -> move S;
+`, ['PARSE_EXPECTED_READ_PATTERN']);
+  });
+
+  it('reports read-pattern arity mismatches inside compact condition alternatives', () => {
+    expectDiagnosticCodes(`tapes: 2
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  on [_, _/_] -> move S/S;
+`, ['VALIDATION_READ_PATTERN_ARITY']);
+  });
+
+  it('reports readable or alternatives without a closing parenthesis', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  if (t1 = _ or (t1 = 0) then move S;
+`, ['PARSE_UNEXPECTED_TOKEN']);
+  });
+
+  it('reports empty readable condition alternatives', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  if () then move S;
+`, ['PARSE_EXPECTED_CONDITION']);
+  });
+
   it('reports missing action semicolons', () => {
     expectDiagnosticCodes(`tapes: 1
 blank: _

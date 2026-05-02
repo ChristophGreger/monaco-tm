@@ -302,12 +302,72 @@ function parseOnTransition(
   stateBlock: StateBlock,
   startToken: Token,
 ) {
+  const conditions = matchValue(state, '[')
+    ? parseOnConditionList(state, startToken, previous(state))
+    : [parseOnCondition(state, startToken, ['->'])];
+
+  consumeValue(state, '->', 'Expected `->` after the read pattern.');
+  parseActionTail(state, stateBlock, conditions);
+}
+
+function parseOnConditionList(
+  state: ParserState,
+  startToken: Token,
+  openToken: Token,
+): Transition['condition'][] {
+  const conditions: Transition['condition'][] = [];
+
+  while (!checkValue(state, ']') && !check(state, 'newline') && !isAtEnd(state)) {
+    const alternativeStart = peek(state);
+    const condition = parseOnCondition(state, startToken, [',', ']', '->']);
+    if (condition.read.length > 0) {
+      conditions.push(condition);
+    } else {
+      state.diagnostics.push(
+        diagnostic(
+          'PARSE_EXPECTED_READ_PATTERN',
+          'Expected a read-pattern alternative.',
+          tokenRange(alternativeStart),
+        ),
+      );
+    }
+
+    if (!matchValue(state, ',')) {
+      break;
+    }
+  }
+
+  consumeValue(state, ']', 'Expected `]` after the read-pattern alternatives.');
+  if (conditions.length === 0) {
+    state.diagnostics.push(
+      diagnostic(
+        'PARSE_EXPECTED_READ_PATTERN',
+        'Expected at least one read-pattern alternative.',
+        openToken.range,
+      ),
+    );
+  }
+
+  return conditions.length > 0
+    ? conditions
+    : [{ kind: 'on', read: [], range: mergeRanges(startToken.range, openToken.range) }];
+}
+
+function parseOnCondition(
+  state: ParserState,
+  startToken: Token,
+  stopValues: string[],
+): Extract<Transition['condition'], { kind: 'on' }> {
   const read: ReadMatcher[] = [];
   let conditionEnd = startToken.range;
 
   // Compact patterns are parsed as a list of matchers separated by `/`.
   // Validation later checks that the count matches the configured tape count.
-  while (!checkValue(state, '->') && !check(state, 'newline') && !isAtEnd(state)) {
+  while (
+    !stopValues.some((value) => checkValue(state, value)) &&
+    !check(state, 'newline') &&
+    !isAtEnd(state)
+  ) {
     const matcher = parseReadPatternElement(state);
     if (matcher) {
       read.push(matcher);
@@ -319,12 +379,11 @@ function parseOnTransition(
     }
   }
 
-  consumeValue(state, '->', 'Expected `->` after the read pattern.');
-  parseActionTail(state, stateBlock, {
+  return {
     kind: 'on',
     read,
     range: mergeRanges(startToken.range, conditionEnd),
-  });
+  };
 }
 
 function parseIfTransition(
@@ -332,18 +391,57 @@ function parseIfTransition(
   stateBlock: StateBlock,
   startToken: Token,
 ) {
-  const atoms: ConditionAtom[] = [];
-  let conditionEnd = startToken.range;
+  const conditions = parseIfConditions(state, startToken);
 
-  // Only `and` is supported. Missing tape references are not materialized here;
-  // validation fills unmentioned tapes with `any`.
+  consumeWord(state, 'then', 'Expected `then` after the condition.');
+  parseActionTail(state, stateBlock, conditions);
+}
+
+function parseIfConditions(
+  state: ParserState,
+  startToken: Token,
+): Array<Extract<Transition['condition'], { kind: 'if' }>> {
+  const conditions: Array<Extract<Transition['condition'], { kind: 'if' }>> = [];
+
   while (!checkWord(state, 'then') && !check(state, 'newline') && !isAtEnd(state)) {
+    const condition = parseIfConditionClause(state, startToken);
+    conditions.push(condition);
+
+    if (!matchWord(state, 'or')) {
+      break;
+    }
+  }
+
+  return conditions.length > 0
+    ? conditions
+    : [{ kind: 'if', atoms: [], range: startToken.range }];
+}
+
+function parseIfConditionClause(
+  state: ParserState,
+  startToken: Token,
+): Extract<Transition['condition'], { kind: 'if' }> {
+  const openParen = matchValue(state, '(') ? previous(state) : undefined;
+  const atoms: ConditionAtom[] = [];
+  let conditionEnd = openParen?.range ?? startToken.range;
+
+  // Missing tape references are not materialized here; validation fills
+  // unmentioned tapes with `any`. `or` splits the condition into independent
+  // transition alternatives while `and` remains a conjunction inside one
+  // alternative.
+  while (
+    !checkWord(state, 'then') &&
+    !checkWord(state, 'or') &&
+    !checkValue(state, ')') &&
+    !check(state, 'newline') &&
+    !isAtEnd(state)
+  ) {
     const atom = parseConditionAtom(state);
     if (atom) {
       atoms.push(atom);
       conditionEnd = atom.range;
     } else {
-      skipUntilWordOrLine(state, ['and', 'then']);
+      skipUntilWordOrValueOrLine(state, ['and', 'or', 'then'], [')']);
     }
 
     if (!matchWord(state, 'and')) {
@@ -351,29 +449,43 @@ function parseIfTransition(
     }
   }
 
-  consumeWord(state, 'then', 'Expected `then` after the condition.');
-  parseActionTail(state, stateBlock, {
+  if (openParen) {
+    const closeParen = consumeValue(state, ')', 'Expected `)` after the condition alternative.');
+    conditionEnd = closeParen?.range ?? conditionEnd;
+  }
+
+  if (atoms.length === 0) {
+    state.diagnostics.push(
+      diagnostic(
+        'PARSE_EXPECTED_CONDITION',
+        'Expected at least one condition atom.',
+        openParen?.range ?? tokenRange(peek(state)),
+      ),
+    );
+  }
+
+  return {
     kind: 'if',
     atoms,
-    range: mergeRanges(startToken.range, conditionEnd),
-  });
+    range: mergeRanges(openParen?.range ?? startToken.range, conditionEnd),
+  };
 }
 
 function parseActionTail(
   state: ParserState,
   stateBlock: StateBlock,
-  condition: Transition['condition'],
+  conditions: Transition['condition'][],
 ) {
-  // `choose` is syntactic sugar: every branch becomes an independent transition
-  // with the same read condition.
+  // `choose` and condition alternatives are syntactic sugar: every resulting
+  // condition/action pair becomes an independent transition.
   if (matchWord(state, 'choose')) {
-    parseChooseBlock(state, stateBlock, condition);
+    parseChooseBlock(state, stateBlock, conditions);
     return;
   }
 
   const actions = parseActionLine(state);
   if (actions) {
-    addTransition(state, stateBlock, condition, actions);
+    addTransitions(state, stateBlock, conditions, actions);
   }
   consumeNewline(state);
 }
@@ -381,7 +493,7 @@ function parseActionTail(
 function parseChooseBlock(
   state: ParserState,
   stateBlock: StateBlock,
-  condition: Transition['condition'],
+  conditions: Transition['condition'][],
 ) {
   consumeValue(state, '{', 'Expected `{` after `choose`.');
   consumeNewline(state);
@@ -394,7 +506,7 @@ function parseChooseBlock(
 
     const actions = parseActionLine(state);
     if (actions) {
-      addTransition(state, stateBlock, condition, actions);
+      addTransitions(state, stateBlock, conditions, actions);
     }
     consumeNewline(state);
   }
@@ -402,6 +514,17 @@ function parseChooseBlock(
   consumeValue(state, '}', 'Expected `}` to close the choose block.');
   rejectTrailingRuleTokens(state);
   consumeNewline(state);
+}
+
+function addTransitions(
+  state: ParserState,
+  stateBlock: StateBlock,
+  conditions: Transition['condition'][],
+  actions: TransitionActions,
+) {
+  for (const condition of conditions) {
+    addTransition(state, stateBlock, condition, actions);
+  }
 }
 
 function addTransition(
@@ -857,11 +980,16 @@ function skipUntilValueOrLine(state: ParserState, values: string[]) {
   }
 }
 
-function skipUntilWordOrLine(state: ParserState, values: string[]) {
+function skipUntilWordOrValueOrLine(
+  state: ParserState,
+  words: string[],
+  values: string[],
+) {
   while (
     !isAtEnd(state) &&
     !check(state, 'newline') &&
-    !values.some((value) => checkWord(state, value))
+    !words.some((word) => checkWord(state, word)) &&
+    !values.some((value) => checkValue(state, value))
   ) {
     advance(state);
   }

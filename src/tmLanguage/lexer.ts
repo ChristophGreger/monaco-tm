@@ -13,7 +13,23 @@ interface LexerState {
 }
 
 const TWO_CHAR_OPERATORS = new Set(['->', '!=']);
-const PUNCTUATION = new Set(['{', '}', ',', '/', '|', ':', ';', '=', '!', '*', '#']);
+const PUNCTUATION = new Set([
+  '{',
+  '}',
+  '[',
+  ']',
+  '(',
+  ')',
+  ',',
+  '/',
+  '|',
+  ':',
+  ';',
+  '=',
+  '!',
+  '*',
+  '#',
+]);
 
 export interface LexResult {
   tokens: Token[];

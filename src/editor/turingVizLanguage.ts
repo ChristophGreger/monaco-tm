@@ -81,7 +81,7 @@ export function registerTuringVizLanguage(monaco: MonacoApi) {
         ],
         [/\b[LRS]\b/, { cases: { '@directions': 'type.identifier', '@default': '' } }],
         [/->|!=|=|!/, 'operator'],
-        [/[{}(),/:;|]/, 'delimiter'],
+        [/[{}[\](),/:;|]/, 'delimiter'],
         [/#|\*/, 'constant'],
         [/[0-9]+/, 'number'],
         [/[A-Za-z_][A-Za-z0-9_]*/, 'identifier'],

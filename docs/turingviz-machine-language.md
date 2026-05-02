@@ -165,8 +165,6 @@ R
 S
 ```
 
-`or` is reserved but not supported as a condition operator.
-
 ## 4. Program Structure
 
 Header declarations and state blocks are top-level constructs.
@@ -389,6 +387,25 @@ on {0,1}/_/*/# -> move R/S/S/L;
 `!x` requires an `alphabet` header because it expands to every alphabet symbol
 except `x`.
 
+### 9.2 Compact Condition Alternatives
+
+Multiple complete read patterns can share the same actions by wrapping them in
+`[...]` and separating alternatives with commas.
+
+```txt
+on [1/1/*, 0/0/0] -> move R/R/S;
+```
+
+This is equivalent to:
+
+```txt
+on 1/1/* -> move R/R/S;
+on 0/0/0 -> move R/R/S;
+```
+
+Each alternative is a full read pattern and must contain exactly one matcher per
+tape. The list does not form a cross product.
+
 ## 10. Readable Transitions with `if`
 
 The readable form is:
@@ -405,9 +422,22 @@ if t1 in {0,1} and t2 = _ then move R/S; goto scan;
 if t1 = _ and t2 not in {0,#} then move S/L;
 ```
 
-Conditions are conjunctions of condition atoms joined with `and`.
+Conditions are conjunctions of condition atoms joined with `and`. Alternatives
+can be joined with `or`; each alternative shares the same actions.
 
-`or` is not supported.
+```txt
+if (t1 = 1 and t2 = 1) or (t1 = 0 and t2 = 0) then move R/R/S;
+```
+
+This is equivalent to:
+
+```txt
+if t1 = 1 and t2 = 1 then move R/R/S;
+if t1 = 0 and t2 = 0 then move R/R/S;
+```
+
+Parentheses are recommended around `or` alternatives. `and` binds inside one
+alternative; `or` creates another transition alternative.
 
 ### 10.1 Condition Atoms
 
