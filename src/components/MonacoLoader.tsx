@@ -10,11 +10,11 @@ import {
 
 // The editor opens with a representative program so language features are
 // visible immediately: multi-tape reads, readable conditions, and a terminal state.
-const initialCode = `tapes 4
-blank _
-alphabet {0, 1, #, _}
-input "1010" | "" | "" | ""
-start q0
+const initialCode = `tapes: 4
+blank: _
+alphabet: {0, 1, #, _}
+input: "1010" | "" | "" | ""
+start: q0
 
 state q0:
   on 1/0/1/0 -> write same/same/0/_; move R/S/L/R; goto q1;

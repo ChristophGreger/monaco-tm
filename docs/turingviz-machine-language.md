@@ -15,11 +15,11 @@ A program consists of:
 Example:
 
 ```txt
-tapes 4
-blank _
-alphabet {0, 1, #, _}
-input "1010" | "" | "" | ""
-start q0
+tapes: 4
+blank: _
+alphabet: {0, 1, #, _}
+input: "1010" | "" | "" | ""
+start: q0
 
 state q0:
   on 1/0/1/0 -> write same/same/0/_; move R/S/L/R; goto q1;
@@ -111,7 +111,7 @@ such as `zero` are state names or keywords, not tape symbols. Quote whitespace
 when it is used as a symbol:
 
 ```txt
-alphabet {0, " ", _}
+alphabet: {0, " ", _}
 on " " -> write same; move S;
 ```
 
@@ -126,7 +126,7 @@ Reserved words cannot be used as unquoted symbols. Quoted reserved words are
 still valid only when they contain exactly one character.
 
 ```txt
-alphabet {0, "L", _}
+alphabet: {0, "L", _}
 on "L" -> write "L"; move S;
 ```
 
@@ -170,12 +170,13 @@ S
 ## 4. Program Structure
 
 Header declarations and state blocks are top-level constructs.
+Header declarations use the form `keyword: value`.
 
 ```txt
-tapes 2
-blank _
-input "01"
-start q0
+tapes: 2
+blank: _
+input: "01"
+start: q0
 
 state q0:
   on 0/_ -> move R/S; goto q0;
@@ -191,7 +192,7 @@ Semantic validation checks whether referenced states and required headers exist.
 Declares the number of tapes.
 
 ```txt
-tapes 3
+tapes: 3
 ```
 
 Valid values are integers from `1` through `6`.
@@ -208,7 +209,7 @@ The value controls the required arity of:
 Declares the blank symbol.
 
 ```txt
-blank _
+blank: _
 ```
 
 The `blank` header is required.
@@ -220,7 +221,7 @@ If an `alphabet` header is present, the blank symbol must be included in it.
 Declares the set of symbols known to the machine.
 
 ```txt
-alphabet {0, 1, #, _}
+alphabet: {0, 1, #, _}
 ```
 
 The `alphabet` header is optional unless the program uses a complement matcher:
@@ -249,7 +250,7 @@ Alphabet symbols must each be exactly one character.
 Declares initial tape contents.
 
 ```txt
-input "1010" | "" | "_"
+input: "1010" | "" | "_"
 ```
 
 Input segments are separated by `|`.
@@ -260,9 +261,9 @@ are declared, omitted tapes are initialized with the blank symbol.
 Example:
 
 ```txt
-tapes 3
-blank _
-input "10"
+tapes: 3
+blank: _
+input: "10"
 ```
 
 Normalizes to:
@@ -282,7 +283,7 @@ input segment; it is not rewritten to the blank symbol.
 Declares the start state.
 
 ```txt
-start q0
+start: q0
 ```
 
 The referenced state must be declared by a `state` block.
@@ -594,7 +595,7 @@ move: [R, S]
 If an alphabet is present:
 
 ```txt
-alphabet {0, 1, _, #}
+alphabet: {0, 1, _, #}
 on 1/!0 -> move R/S;
 ```
 

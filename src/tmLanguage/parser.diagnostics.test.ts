@@ -6,23 +6,23 @@ describe('parseTuringMachine diagnostics', () => {
   });
 
   it('reports strings that reach a line break', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {0, _}
-input "0
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {0, _}
+input: "0
+start: q0
 `, ['LEX_UNTERMINATED_STRING']);
   });
 
   it('reports strings that reach the end of file', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {0, _}
-input "0`, ['LEX_UNTERMINATED_STRING']);
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {0, _}
+input: "0`, ['LEX_UNTERMINATED_STRING']);
   });
 
   it('reports unterminated block comments', () => {
-    expectDiagnosticCodes(`tapes 1
+    expectDiagnosticCodes(`tapes: 1
 /* open comment`, ['LEX_UNTERMINATED_BLOCK_COMMENT']);
   });
 
@@ -30,24 +30,34 @@ input "0`, ['LEX_UNTERMINATED_STRING']);
     expectDiagnosticCodes('move R;', ['PARSE_EXPECTED_TOP_LEVEL']);
   });
 
-  it('reports duplicate headers', () => {
+  it('reports missing header colons', () => {
     expectDiagnosticCodes(`tapes 1
-tapes 2
-blank _
-alphabet {0, _}
-input ""
-start q0
+blank: _
+input: ""
+start: q0
+
+state q0:
+`, ['PARSE_UNEXPECTED_TOKEN']);
+  });
+
+  it('reports duplicate headers', () => {
+    expectDiagnosticCodes(`tapes: 1
+tapes: 2
+blank: _
+alphabet: {0, _}
+input: ""
+start: q0
 
 state q0:
 `, ['PARSE_DUPLICATE_HEADER']);
   });
 
   it('reports trailing header tokens', () => {
-    expectDiagnosticCodes(`tapes 1 extra
-blank _
-alphabet {0, _}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1 extra
+blank: _
+alphabet: {0, _}
+input: ""
+start: q0
 
 state q0:
 `, ['PARSE_TRAILING_HEADER_TOKENS']);
@@ -61,99 +71,99 @@ state q0:
   });
 
   it('reports tape counts outside the supported range', () => {
-    expectDiagnosticCodes(`tapes 7
-blank _
-alphabet {0, _}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 7
+blank: _
+alphabet: {0, _}
+input: ""
+start: q0
 
 state q0:
 `, ['VALIDATION_TAPES_RANGE']);
   });
 
   it('reports blank symbols outside the alphabet', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {0, 1}
-input "0"
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {0, 1}
+input: "0"
+start: q0
 
 state q0:
 `, ['VALIDATION_BLANK_NOT_IN_ALPHABET']);
   });
 
   it('reports duplicate alphabet symbols', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {0, 0, _}
-input "0"
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {0, 0, _}
+input: "0"
+start: q0
 
 state q0:
 `, ['VALIDATION_DUPLICATE_ALPHABET_SYMBOL']);
   });
 
   it('reports multi-character blank symbols', () => {
-    expectDiagnosticCodes(`tapes 1
-blank empty
-alphabet {e, _}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: empty
+alphabet: {e, _}
+input: ""
+start: q0
 
 state q0:
 `, ['VALIDATION_SYMBOL_LENGTH']);
   });
 
   it('reports multi-character alphabet symbols', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {zero, _}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {zero, _}
+input: ""
+start: q0
 
 state q0:
 `, ['VALIDATION_SYMBOL_LENGTH']);
   });
 
   it('reports too many input segments', () => {
-    expectDiagnosticCodes(`tapes 2
-blank _
-alphabet {0, 1, _}
-input "10" | "" | ""
-start q0
+    expectDiagnosticCodes(`tapes: 2
+blank: _
+alphabet: {0, 1, _}
+input: "10" | "" | ""
+start: q0
 
 state q0:
 `, ['VALIDATION_INPUT_TAPE_COUNT']);
   });
 
   it('reports input symbols outside the alphabet', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {0, _}
-input "1"
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {0, _}
+input: "1"
+start: q0
 
 state q0:
 `, ['VALIDATION_INPUT_SYMBOL']);
   });
 
   it('reports unknown start states', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {0, _}
-input ""
-start missing
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {0, _}
+input: ""
+start: missing
 
 state q0:
 `, ['VALIDATION_UNKNOWN_START_STATE']);
   });
 
   it('reports duplicate states', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {0, _}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {0, _}
+input: ""
+start: q0
 
 state q0:
 
@@ -162,11 +172,11 @@ state q0:
   });
 
   it('reports unknown rules inside a state', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   write 0; move S;
@@ -174,11 +184,11 @@ state q0:
   });
 
   it('reports missing arrows in compact transitions', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _ move S;
@@ -186,11 +196,11 @@ state q0:
   });
 
   it('reports missing then in readable transitions', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   if t1 = _ move S;
@@ -198,11 +208,11 @@ state q0:
   });
 
   it('reports invalid condition starts', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   if _ = t1 then move S;
@@ -210,11 +220,11 @@ state q0:
   });
 
   it('reports invalid condition operators', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   if t1 _ then move S;
@@ -222,11 +232,11 @@ state q0:
   });
 
   it('reports unclosed symbol sets', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   if t1 in {_,0 then move S;
@@ -234,11 +244,11 @@ state q0:
   });
 
   it('reports choose blocks without an opening brace', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _ -> choose
@@ -247,11 +257,11 @@ state q0:
   });
 
   it('reports choose blocks without a closing brace', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _ -> choose {
@@ -260,11 +270,11 @@ state q0:
   });
 
   it('reports missing action semicolons', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _ -> move S
@@ -272,11 +282,11 @@ state q0:
   });
 
   it('reports unknown action statements', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _ -> erase _; move S;
@@ -284,11 +294,11 @@ state q0:
   });
 
   it('reports duplicate write actions', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _ -> write 0; write _; move S;
@@ -296,11 +306,11 @@ state q0:
   });
 
   it('reports duplicate move actions', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _ -> move S; move R;
@@ -308,11 +318,11 @@ state q0:
   });
 
   it('reports duplicate goto actions', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _ -> move S; goto q0; goto q0;
@@ -320,11 +330,11 @@ state q0:
   });
 
   it('reports invalid move directions', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _ -> move X;
@@ -332,11 +342,11 @@ state q0:
   });
 
   it('reports unquoted reserved symbols', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {same, _}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {same, _}
+input: ""
+start: q0
 
 state q0:
   on _ -> move S;
@@ -344,33 +354,33 @@ state q0:
   });
 
   it('reports reserved state names', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start state
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: state
 
 state state:
 `, ['PARSE_RESERVED_STATE_NAME']);
   });
 
   it('reports invalid state names', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state 1:
 `, ['PARSE_EXPECTED_STATE_NAME']);
   });
 
   it('reports read pattern arity mismatches', () => {
-    expectDiagnosticCodes(`tapes 2
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 2
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _ -> move S/S;
@@ -378,11 +388,11 @@ state q0:
   });
 
   it('reports write pattern arity mismatches', () => {
-    expectDiagnosticCodes(`tapes 2
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 2
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _/_ -> write 0; move S/S;
@@ -390,11 +400,11 @@ state q0:
   });
 
   it('reports move pattern arity mismatches', () => {
-    expectDiagnosticCodes(`tapes 2
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 2
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _/_ -> move S;
@@ -402,11 +412,11 @@ state q0:
   });
 
   it('reports missing move actions', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _ -> write 0;
@@ -414,11 +424,11 @@ state q0:
   });
 
   it('reports unknown goto targets', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on _ -> move S; goto missing;
@@ -426,11 +436,11 @@ state q0:
   });
 
   it('reports tape references outside the configured range', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   if t2 = _ then move S;
@@ -438,10 +448,10 @@ state q0:
   });
 
   it('reports complement patterns when alphabet is missing', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+input: ""
+start: q0
 
 state q0:
   on !0 -> move S;
@@ -449,11 +459,11 @@ state q0:
   });
 
   it('reports symbols outside the alphabet in transitions', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
 
 state q0:
   on 1 -> write 1; move S;
@@ -461,10 +471,10 @@ state q0:
   });
 
   it('reports multi-character transition symbols', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-input ""
-start q0
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+input: ""
+start: q0
 
 state q0:
   on word -> write other; move S;

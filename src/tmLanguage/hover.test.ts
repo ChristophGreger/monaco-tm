@@ -1,10 +1,10 @@
 import { getSemanticHover } from './index';
 
-const hoverProgram = `tapes 1
-blank _
-alphabet {0, " ", _}
-input ""
-start q0
+const hoverProgram = `tapes: 1
+blank: _
+alphabet: {0, " ", _}
+input: ""
+start: q0
 
 state q0:
   on 0 -> move S; goto missing;
@@ -42,7 +42,7 @@ describe('getSemanticHover', () => {
   });
 
   it('describes quoted text', () => {
-    expect(getSemanticHover(hoverProgram, 3, 14)).toBe(
+    expect(getSemanticHover(hoverProgram, 3, 15)).toBe(
       'Quoted text is used for input segments and one-character symbols such as spaces.',
     );
   });

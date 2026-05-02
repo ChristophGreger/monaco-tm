@@ -3,11 +3,11 @@ import { expectValidMachine } from './testUtils';
 describe('parseTuringMachine valid programs', () => {
   it('parses a compact multi-tape program with comments', () => {
     const machine = expectValidMachine(`-- A small two-tape machine.
-tapes 2
-blank _
-alphabet {0, 1, #, _}
-input "10" | ""
-start scan
+tapes: 2
+blank: _
+alphabet: {0, 1, #, _}
+input: "10" | ""
+start: scan
 
 /* State comments may span
    multiple lines. */
@@ -41,11 +41,11 @@ state reject:
   });
 
   it('pads omitted input tapes with the blank symbol', () => {
-    const machine = expectValidMachine(`tapes 3
-blank _
-alphabet {0, 1, _}
-input "10"
-start q0
+    const machine = expectValidMachine(`tapes: 3
+blank: _
+alphabet: {0, 1, _}
+input: "10"
+start: q0
 
 state q0:
   on 1/_/_ -> move S/S/S; goto done;
@@ -57,11 +57,11 @@ state done:
   });
 
   it('accepts exact input tape counts and empty input segments', () => {
-    const machine = expectValidMachine(`tapes 3
-blank _
-alphabet {0, 1, _}
-input "" | "_" | "10"
-start q0
+    const machine = expectValidMachine(`tapes: 3
+blank: _
+alphabet: {0, 1, _}
+input: "" | "_" | "10"
+start: q0
 
 state q0:
   on _/_/1 -> move S/S/R; goto q0;
@@ -71,11 +71,11 @@ state q0:
   });
 
   it('keeps the current state when goto is omitted', () => {
-    const machine = expectValidMachine(`tapes 1
-blank _
-alphabet {0, _}
-input "0"
-start q0
+    const machine = expectValidMachine(`tapes: 1
+blank: _
+alphabet: {0, _}
+input: "0"
+start: q0
 
 state q0:
   on 0 -> write _; move R;
@@ -91,11 +91,11 @@ state q0:
   });
 
   it('uses same writes when the write action is omitted', () => {
-    const machine = expectValidMachine(`tapes 2
-blank _
-alphabet {0, _}
-input "0"
-start q0
+    const machine = expectValidMachine(`tapes: 2
+blank: _
+alphabet: {0, _}
+input: "0"
+start: q0
 
 state q0:
   on 0/_ -> move R/S; goto q0;
@@ -105,11 +105,11 @@ state q0:
   });
 
   it('normalizes compact read patterns', () => {
-    const machine = expectValidMachine(`tapes 4
-blank _
-alphabet {0, 1, #, _}
-input ""
-start q0
+    const machine = expectValidMachine(`tapes: 4
+blank: _
+alphabet: {0, 1, #, _}
+input: ""
+start: q0
 
 state q0:
   on */!0/{0,1}/# -> move S/S/S/S; goto q0;
@@ -124,11 +124,11 @@ state q0:
   });
 
   it('normalizes readable if conditions and treats unmentioned tapes as any', () => {
-    const machine = expectValidMachine(`tapes 4
-blank _
-alphabet {0, 1, #, _}
-input ""
-start q0
+    const machine = expectValidMachine(`tapes: 4
+blank: _
+alphabet: {0, 1, #, _}
+input: ""
+start: q0
 
 state q0:
   if t1 != 0 and t2 in {0,1} and any t4 then move R/S/L/S; goto q1;
@@ -145,11 +145,11 @@ state q1:
   });
 
   it('expands on choose blocks into nondeterministic transitions', () => {
-    const machine = expectValidMachine(`tapes 1
-blank _
-alphabet {0, 1, _}
-input ""
-start generate
+    const machine = expectValidMachine(`tapes: 1
+blank: _
+alphabet: {0, 1, _}
+input: ""
+start: generate
 
 state generate:
   on _ -> choose {
@@ -168,11 +168,11 @@ state done:
   });
 
   it('keeps repeated matching rules as nondeterministic alternatives', () => {
-    const machine = expectValidMachine(`tapes 1
-blank _
-alphabet {0, 1, _}
-input ""
-start generate
+    const machine = expectValidMachine(`tapes: 1
+blank: _
+alphabet: {0, 1, _}
+input: ""
+start: generate
 
 state generate:
   on _ -> write 0; move S; goto done;
@@ -185,11 +185,11 @@ state done:
   });
 
   it('allows quoted single-character symbols including spaces', () => {
-    const machine = expectValidMachine(`tapes 1
-blank _
-alphabet {" ", _}
-input ""
-start q0
+    const machine = expectValidMachine(`tapes: 1
+blank: _
+alphabet: {" ", _}
+input: ""
+start: q0
 
 state q0:
   on " " -> write same; move S; goto q0;
@@ -203,11 +203,11 @@ state q0:
   });
 
   it('allows numeric symbols and underscore-prefixed state names', () => {
-    const machine = expectValidMachine(`tapes 1
-blank _
-alphabet {0, 1, 2, _}
-input "12"
-start _start
+    const machine = expectValidMachine(`tapes: 1
+blank: _
+alphabet: {0, 1, 2, _}
+input: "12"
+start: _start
 
 state _start:
   on 1 -> write 2; move R; goto _start;
@@ -218,10 +218,10 @@ state _start:
   });
 
   it('allows programs without an alphabet when no complement pattern is used', () => {
-    const machine = expectValidMachine(`tapes 2
-blank _
-input "ab"
-start q0
+    const machine = expectValidMachine(`tapes: 2
+blank: _
+input: "ab"
+start: q0
 
 state q0:
   on a/{b,c} -> write x/same; move R/S; goto q0;

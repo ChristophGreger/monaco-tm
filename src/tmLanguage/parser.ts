@@ -82,6 +82,7 @@ export function parseSyntax(source: string): {
 
 function parseHeaderLine(state: ParserState) {
   const keyword = advance(state);
+  consumeValue(state, ':', `Expected \`:\` after \`${keyword.value}\`.`);
 
   switch (keyword.value) {
     case 'tapes':
