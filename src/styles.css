@@ -1,3 +1,4 @@
+/* Full-height shell so Monaco can own the available viewport without manual sizing. */
 :root {
   color: #1d2433;
   background: #f6f7f9;
@@ -23,6 +24,7 @@ button {
 }
 
 .monaco-loader {
+  /* Header button above a flexing editor area. */
   display: grid;
   grid-template-rows: 48px minmax(0, 1fr);
   width: 100%;
