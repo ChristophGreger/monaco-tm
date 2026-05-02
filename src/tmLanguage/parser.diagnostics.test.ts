@@ -93,6 +93,28 @@ state q0:
 `, ['VALIDATION_DUPLICATE_ALPHABET_SYMBOL']);
   });
 
+  it('reports multi-character blank symbols', () => {
+    expectDiagnosticCodes(`tapes 1
+blank empty
+alphabet {e, _}
+input ""
+start q0
+
+state q0:
+`, ['VALIDATION_SYMBOL_LENGTH']);
+  });
+
+  it('reports multi-character alphabet symbols', () => {
+    expectDiagnosticCodes(`tapes 1
+blank _
+alphabet {zero, _}
+input ""
+start q0
+
+state q0:
+`, ['VALIDATION_SYMBOL_LENGTH']);
+  });
+
   it('reports too many input segments', () => {
     expectDiagnosticCodes(`tapes 2
 blank _
@@ -436,5 +458,16 @@ start q0
 state q0:
   on 1 -> write 1; move S;
 `, ['VALIDATION_SYMBOL_NOT_IN_ALPHABET']);
+  });
+
+  it('reports multi-character transition symbols', () => {
+    expectDiagnosticCodes(`tapes 1
+blank _
+input ""
+start q0
+
+state q0:
+  on word -> write other; move S;
+`, ['VALIDATION_SYMBOL_LENGTH']);
   });
 });

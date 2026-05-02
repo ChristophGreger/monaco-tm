@@ -66,7 +66,7 @@ export function getSemanticHover(
   }
 
   if (token.kind === 'string') {
-    return 'Quoted text is used for input segments and reserved symbols.';
+    return 'Quoted text is used for input segments and one-character symbols such as spaces.';
   }
 
   if (KEYWORD_HOVERS[token.value]) {

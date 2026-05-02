@@ -43,8 +43,24 @@ export function validateAndNormalize(ast: ProgramAst): {
   }
 
   const alphabetSet = new Set(alphabet ?? []);
+  if (blank !== undefined) {
+    validateSymbolLength(
+      blank,
+      ast.header.blank!.range,
+      diagnostics,
+      'Blank symbol',
+    );
+  }
+
   if (alphabet) {
     for (const symbol of alphabet) {
+      validateSymbolLength(
+        symbol,
+        ast.header.alphabet!.range,
+        diagnostics,
+        'Alphabet symbol',
+      );
+
       const occurrences = alphabet.filter((candidate) => candidate === symbol);
       if (occurrences.length > 1) {
         diagnostics.push(
@@ -349,6 +365,8 @@ function validateSymbol(
   alphabetSet: Set<string>,
   alphabet: string[] | undefined,
 ) {
+  validateSymbolLength(symbol, range, diagnostics, 'Symbol');
+
   if (!alphabet) {
     return;
   }
@@ -362,6 +380,25 @@ function validateSymbol(
       ),
     );
   }
+}
+
+function validateSymbolLength(
+  symbol: string,
+  range: SourceRange,
+  diagnostics: Diagnostic[],
+  label: string,
+) {
+  if (Array.from(symbol).length === 1) {
+    return;
+  }
+
+  diagnostics.push(
+    diagnostic(
+      'VALIDATION_SYMBOL_LENGTH',
+      `${label} \`${symbol}\` must be exactly one character.`,
+      range,
+    ),
+  );
 }
 
 function normalizeTransition(

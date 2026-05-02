@@ -106,22 +106,35 @@ t6
 
 Symbols are values that may be read from or written to tapes.
 
+Every concrete tape symbol must be exactly one character. Multi-character words
+such as `zero` are state names or keywords, not tape symbols. Quote whitespace
+when it is used as a symbol:
+
+```txt
+alphabet {0, " ", _}
+on " " -> write same; move S;
+```
+
 Unquoted symbols may be:
 
-- words such as `a`, `zero`, `_`
-- numbers such as `0`, `1`, `42`
+- single-letter words such as `a` or `_`
+- single digits such as `0` or `1`
 - `#`
 - `*` in write/alphabet contexts
 
-Reserved words used as symbols must be quoted:
+Reserved words cannot be used as unquoted symbols. Quoted reserved words are
+still valid only when they contain exactly one character.
 
 ```txt
-alphabet {0, "same", _}
-on "same" -> write "same"; move S;
+alphabet {0, "L", _}
+on "L" -> write "L"; move S;
 ```
 
 String literals are delimited with double quotes. Escaped characters are allowed
 inside string literals so an escaped quote does not terminate the string.
+
+The write value `same` is a special action value and remains allowed even though
+it has more than one character.
 
 ### 3.3 Reserved Words
 
@@ -228,6 +241,8 @@ If omitted, symbol membership is not validated and the normalized machine uses a
 empty alphabet array.
 
 Alphabet symbols must be unique.
+
+Alphabet symbols must each be exactly one character.
 
 ### 5.4 `input`
 
@@ -599,6 +614,8 @@ A program is invalid if any of the following applies:
 - `input` is missing.
 - `start` is missing.
 - `alphabet` contains duplicate symbols.
+- `alphabet` contains a symbol that is not exactly one character.
+- `blank` is not exactly one character.
 - `blank` is not in `alphabet`, when `alphabet` is declared.
 - an input symbol is not in `alphabet`, when `alphabet` is declared.
 - `input` declares more segments than `tapes`.
@@ -611,6 +628,8 @@ A program is invalid if any of the following applies:
 - a transition does not contain `move`.
 - a tape reference such as `t3` is outside the configured tape range.
 - a read or write symbol is not in `alphabet`, when `alphabet` is declared.
+- a read or write symbol is not exactly one character. The write value `same`
+  is exempt because it means "keep the current symbol unchanged".
 - `!=`, `!x`, or `not in` is used without an `alphabet` header.
 - a reserved word is used as an unquoted symbol.
 - a reserved word is used as a state name.

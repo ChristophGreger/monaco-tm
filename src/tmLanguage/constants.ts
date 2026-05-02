@@ -46,8 +46,8 @@ export const COMPLEMENT_OPERATORS = new Set(['!=', '!', 'not in']);
 // keywords only; state names and symbols get context-sensitive hovers elsewhere.
 export const KEYWORD_HOVERS: Record<string, string> = {
   tapes: 'Declares how many tapes the machine has. Valid values are 1 through 6.',
-  blank: 'Declares the blank symbol. If an alphabet is declared, the blank must be part of it.',
-  alphabet: 'Optionally declares every symbol that may appear on a tape or in a transition. Required for complement patterns.',
+  blank: 'Declares the one-character blank symbol. If an alphabet is declared, the blank must be part of it.',
+  alphabet: 'Optionally declares every one-character symbol that may appear on a tape or in a transition. Required for complement patterns.',
   input: 'Declares the initial tape contents. Missing tape segments are filled with the blank symbol.',
   start: 'Declares the state where execution begins.',
   state: 'Starts a state block. State names may contain letters, digits, and underscores.',

@@ -736,7 +736,8 @@ function parseSymbolToken(
 ): { value: string; range: SourceRange } | undefined {
   const token = peek(state);
 
-  // Quoted symbols are the escape hatch for reserved words such as "same".
+  // Quoted symbols are the escape hatch for whitespace and single-character
+  // reserved words such as "L".
   if (token.kind === 'string') {
     advance(state);
     return { value: token.value, range: token.range };

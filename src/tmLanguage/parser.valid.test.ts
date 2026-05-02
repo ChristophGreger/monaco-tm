@@ -184,20 +184,20 @@ state done:
     expect(machine.transitions).toHaveLength(2);
   });
 
-  it('allows quoted reserved words as symbols', () => {
+  it('allows quoted single-character symbols including spaces', () => {
     const machine = expectValidMachine(`tapes 1
 blank _
-alphabet {"same", _}
+alphabet {" ", _}
 input ""
 start q0
 
 state q0:
-  on "same" -> write "same"; move S; goto q0;
+  on " " -> write same; move S; goto q0;
 `);
 
-    expect(machine.alphabet).toEqual(['same', '_']);
+    expect(machine.alphabet).toEqual([' ', '_']);
     expect(machine.transitions[0]).toMatchObject({
-      read: [['same']],
+      read: [[' ']],
       write: ['same'],
     });
   });

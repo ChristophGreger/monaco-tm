@@ -2,7 +2,7 @@ import { getSemanticHover } from './index';
 
 const hoverProgram = `tapes 1
 blank _
-alphabet {0, "same", _}
+alphabet {0, " ", _}
 input ""
 start q0
 
@@ -43,7 +43,7 @@ describe('getSemanticHover', () => {
 
   it('describes quoted text', () => {
     expect(getSemanticHover(hoverProgram, 3, 14)).toBe(
-      'Quoted text is used for input segments and reserved symbols.',
+      'Quoted text is used for input segments and one-character symbols such as spaces.',
     );
   });
 
