@@ -57,4 +57,34 @@ state q1:
       'Tape reference `t1`. Tape indexes start at 1.',
     );
   });
+
+  it('describes existing goto targets', () => {
+    const program = `${hoverProgram}
+state q1:
+  on _ -> move S; goto q0;
+`;
+
+    expect(getSemanticHover(program, 11, 25)).toBe('Goto target state `q0`.');
+  });
+
+  it('returns undefined for whitespace and unknown symbols', () => {
+    const program = `tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  on x -> move S; goto q0;
+`;
+
+    expect(getSemanticHover(hoverProgram, 6, 1)).toBeUndefined();
+    expect(getSemanticHover(program, 8, 6)).toBeUndefined();
+  });
+
+  it('describes movement keywords', () => {
+    expect(getSemanticHover(hoverProgram, 8, 16)).toBe(
+      'Keep this tape head on the current cell.',
+    );
+  });
 });

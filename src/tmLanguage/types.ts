@@ -63,12 +63,16 @@ export interface TransitionActions {
   moveRange?: SourceRange;
   goto?: string;
   gotoRange?: SourceRange;
+  // The complete action span is kept even when individual actions are omitted,
+  // because validation reports missing required actions against this range.
   range: SourceRange;
 }
 
 export interface Transition {
   id: string;
   from: string;
+  // Both compact `on` rules and readable `if` rules describe the same logical
+  // read condition; validation normalizes them into one matcher list per tape.
   condition:
     | { kind: 'on'; read: ReadMatcher[]; range: SourceRange }
     | { kind: 'if'; atoms: ConditionAtom[]; range: SourceRange };
@@ -95,6 +99,8 @@ export interface InputSegment {
 
 export interface ProgramAst {
   header: {
+    // Header values intentionally preserve source ranges so duplicate, missing,
+    // and cross-reference diagnostics can point back to user-authored text.
     tapes?: HeaderField<number>;
     blank?: HeaderField<string>;
     alphabet?: HeaderField<string[]>;

@@ -60,6 +60,8 @@ export function lex(source: string): LexResult {
     }
 
     if (char === '-' && peek(source, state) === '-') {
+      // Comments are not emitted as trivia tokens because no downstream feature
+      // currently needs to preserve or format them.
       skipLineComment(source, state);
       continue;
     }
@@ -203,6 +205,7 @@ function skipLineComment(source: string, state: LexerState) {
 
 function skipBlockComment(source: string, state: LexerState) {
   const start = snapshot(state);
+  // Consume the opening delimiter before scanning for the closing one.
   advance(source, state);
   advance(source, state);
 

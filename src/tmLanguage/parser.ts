@@ -182,6 +182,16 @@ function parseInputHeader(state: ParserState, startRange: SourceRange) {
   const segments: InputSegment[] = [];
   let endRange = startRange;
 
+  if (check(state, 'newline') || check(state, 'eof')) {
+    state.diagnostics.push(
+      diagnostic(
+        'PARSE_UNEXPECTED_TOKEN',
+        'Expected an input string.',
+        tokenRange(peek(state)),
+      ),
+    );
+  }
+
   while (!check(state, 'newline') && !isAtEnd(state)) {
     const segment = consumeKind(state, 'string', 'Expected an input string.');
     if (!segment) {
@@ -302,6 +312,8 @@ function parseOnTransition(
   stateBlock: StateBlock,
   startToken: Token,
 ) {
+  // Bracketed `on` patterns are alternatives that share one action tail, while
+  // the unbracketed form produces a single condition.
   const conditions = matchValue(state, '[')
     ? parseOnConditionList(state, startToken, previous(state))
     : [parseOnCondition(state, startToken, ['->'])];
@@ -403,6 +415,8 @@ function parseIfConditions(
 ): Array<Extract<Transition['condition'], { kind: 'if' }>> {
   const conditions: Array<Extract<Transition['condition'], { kind: 'if' }>> = [];
 
+  // Each `or` branch becomes a separate transition alternative with the same
+  // action tail. This keeps later normalization simple and execution-oriented.
   while (!checkWord(state, 'then') && !check(state, 'newline') && !isAtEnd(state)) {
     const condition = parseIfConditionClause(state, startToken);
     conditions.push(condition);
@@ -495,6 +509,8 @@ function parseChooseBlock(
   stateBlock: StateBlock,
   conditions: Transition['condition'][],
 ) {
+  // `choose` groups nondeterministic action alternatives. Every line inside the
+  // block is paired with every parsed condition alternative.
   consumeValue(state, '{', 'Expected `{` after `choose`.');
   consumeNewline(state);
 
@@ -522,6 +538,8 @@ function addTransitions(
   conditions: Transition['condition'][],
   actions: TransitionActions,
 ) {
+  // Action objects are immutable after parsing, so sharing one parsed action
+  // tail across multiple condition alternatives is safe.
   for (const condition of conditions) {
     addTransition(state, stateBlock, condition, actions);
   }
@@ -545,6 +563,8 @@ function addTransition(
 function parseConditionAtom(state: ParserState): ConditionAtom | undefined {
   const start = peek(state);
 
+  // The readable form allows `any t1` as a first-class atom so users do not
+  // need to switch back to compact `*` syntax inside `if` conditions.
   if (matchWord(state, 'any')) {
     const tape = parseTapeReference(state);
     if (!tape) {
@@ -683,6 +703,8 @@ function parseSymbolSet(
   const symbols: string[] = [];
   let endRange = open.range;
 
+  // Sets keep duplicates for now; validation owns semantic checks and can report
+  // errors against the complete set range instead of a parser-only fragment.
   while (!checkValue(state, '}') && !check(state, 'newline') && !isAtEnd(state)) {
     const symbol = parseSymbolToken(state, 'Expected a symbol in the set.');
     if (symbol) {
@@ -789,12 +811,24 @@ function parseActionLine(state: ParserState): TransitionActions | undefined {
   }
 
   actions.range = mergeRanges(start.range, endRange);
+  if (!sawAction) {
+    state.diagnostics.push(
+      diagnostic(
+        'PARSE_EXPECTED_ACTION',
+        'Expected `write`, `move`, or `goto`.',
+        tokenRange(start),
+      ),
+    );
+  }
+
   return sawAction ? actions : undefined;
 }
 
 function parseWritePattern(state: ParserState): WriteValue[] {
   const values: WriteValue[] = [];
 
+  // `same` is represented explicitly instead of being lowered to a symbol, so
+  // validation can distinguish "write the current value" from writing text.
   while (!checkValue(state, ';') && !check(state, 'newline') && !isAtEnd(state)) {
     if (matchWord(state, 'same')) {
       values.push({ kind: 'same', range: previous(state).range });
@@ -818,6 +852,8 @@ function parseWritePattern(state: ParserState): WriteValue[] {
 function parseMovePattern(state: ParserState): Array<{ value: Direction; range: SourceRange }> {
   const directions: Array<{ value: Direction; range: SourceRange }> = [];
 
+  // Invalid directions are consumed as part of the pattern so one bad item does
+  // not prevent diagnostics for the rest of the line.
   while (!checkValue(state, ';') && !check(state, 'newline') && !isAtEnd(state)) {
     const token = advance(state);
     if (token.value === 'L' || token.value === 'R' || token.value === 'S') {
@@ -971,6 +1007,8 @@ function consumeWord(
 }
 
 function skipUntilValueOrLine(state: ParserState, values: string[]) {
+  // Recovery stops at punctuation that can still belong to the surrounding
+  // construct, allowing the parser to resume without discarding the full line.
   while (
     !isAtEnd(state) &&
     !check(state, 'newline') &&
@@ -996,6 +1034,8 @@ function skipUntilWordOrValueOrLine(
 }
 
 function skipLine(state: ParserState) {
+  // Line-oriented recovery keeps malformed rules isolated from the next rule or
+  // state block.
   while (!isAtEnd(state) && !check(state, 'newline')) {
     advance(state);
   }

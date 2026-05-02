@@ -306,4 +306,191 @@ state done:
       write: ['x', 'same'],
     });
   });
+
+  it('accepts the lower and upper supported tape-count boundaries', () => {
+    const singleTape = expectValidMachine(`tapes: 1
+blank: _
+alphabet: {0, _}
+input: ""
+start: q0
+
+state q0:
+  on _ -> move S;
+`);
+
+    const sixTapes = expectValidMachine(`tapes: 6
+blank: _
+alphabet: {0, _}
+input: ""
+start: q0
+
+state q0:
+  on _/_/_/_/_/_ -> move S/S/S/S/S/S;
+`);
+
+    expect(singleTape.tapes).toBe(1);
+    expect(sixTapes.tapes).toBe(6);
+  });
+
+  it('allows action clauses in any order', () => {
+    const machine = expectValidMachine(`tapes: 2
+blank: _
+alphabet: {0, 1, _}
+input: ""
+start: q0
+
+state q0:
+  on _/_ -> goto done; write 0/1; move R/S;
+
+state done:
+`);
+
+    expect(machine.transitions[0]).toMatchObject({
+      to: 'done',
+      write: ['0', '1'],
+      move: ['R', 'S'],
+    });
+  });
+
+  it('normalizes readable not-in conditions', () => {
+    const machine = expectValidMachine(`tapes: 2
+blank: _
+alphabet: {0, 1, #, _}
+input: ""
+start: q0
+
+state q0:
+  if t1 not in {0,#} and t2 = _ then move R/S; goto q0;
+`);
+
+    expect(machine.transitions[0].read).toEqual([['1', '_'], ['_']]);
+  });
+
+  it('supports quoted reserved one-character symbols', () => {
+    const machine = expectValidMachine(`tapes: 1
+blank: "_"
+alphabet: {"L", "_"}
+input: "L"
+start: q0
+
+state q0:
+  on "L" -> write "_"; move S; goto q0;
+`);
+
+    expect(machine.alphabet).toEqual(['L', '_']);
+    expect(machine.transitions[0]).toMatchObject({
+      read: [['L']],
+      write: ['_'],
+    });
+  });
+
+  it('supports escaped quotes inside input strings', () => {
+    const machine = expectValidMachine(`tapes: 1
+blank: _
+alphabet: {_, "\\""}
+input: "\\""
+start: q0
+
+state q0:
+  on "\\"" -> move S;
+`);
+
+    expect(machine.alphabet).toEqual(['_', '"']);
+    expect(machine.input).toEqual(['"']);
+    expect(machine.transitions[0].read).toEqual([['"']]);
+  });
+
+  it('allows star as a concrete write symbol', () => {
+    const machine = expectValidMachine(`tapes: 1
+blank: _
+alphabet: {_, *}
+input: ""
+start: q0
+
+state q0:
+  on _ -> write *; move S;
+`);
+
+    expect(machine.transitions[0].write).toEqual(['*']);
+  });
+
+  it('handles block comments between header tokens', () => {
+    const machine = expectValidMachine(`tapes: /* inline block comment */ 1
+blank: _
+alphabet: {0, _}
+input: ""
+start: q0
+
+state q0:
+  on _ -> move S;
+`);
+
+    expect(machine.tapes).toBe(1);
+  });
+
+  it('does not treat slash-star inside read patterns as block comments', () => {
+    const machine = expectValidMachine(`tapes: 2
+blank: _
+alphabet: {1, _}
+input: ""
+start: q0
+
+state q0:
+  on 1/* -> move R/S;
+`);
+
+    expect(machine.transitions[0].read).toEqual([['1'], 'any']);
+  });
+
+  it('accepts tabs and carriage returns as insignificant whitespace', () => {
+    const machine = expectValidMachine('tapes:\t1\r\nblank:\t_\r\nalphabet: {0, _}\r\ninput: ""\r\nstart: q0\r\n\r\nstate q0:\r\n\ton _ -> move S;\r\n');
+
+    expect(machine.transitions[0].move).toEqual(['S']);
+  });
+
+  it('parses a final rule without a trailing newline', () => {
+    const machine = expectValidMachine(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  on _ -> write 0; move S;`);
+
+    expect(machine.transitions).toHaveLength(1);
+    expect(machine.transitions[0].write).toEqual(['0']);
+  });
+
+  it('normalizes choose branches without explicit gotos to the current state', () => {
+    const machine = expectValidMachine(`tapes: 1
+blank: _
+alphabet: {0, 1, _}
+input: ""
+start: q0
+
+state q0:
+  if t1 in {0,1} then choose {
+    write 0; move R;
+    write 1; move R;
+  }
+`);
+
+    expect(machine.transitions).toHaveLength(2);
+    expect(machine.transitions.map((transition) => transition.to)).toEqual(['q0', 'q0']);
+  });
+
+  it('keeps machine output undefined only when diagnostics exist', () => {
+    const result = expectValidMachine(`tapes: 1
+blank: _
+input: ""
+start: q0
+
+state q0:
+  on a -> write b; move R;
+`);
+
+    expect(result.alphabet).toEqual([]);
+    expect(result.transitions[0].read).toEqual([['a']]);
+  });
 });

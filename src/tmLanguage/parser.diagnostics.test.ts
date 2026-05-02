@@ -81,11 +81,83 @@ state q0:
 `, ['VALIDATION_TAPES_RANGE']);
   });
 
+  it('reports zero tape counts', () => {
+    expectDiagnosticCodes(`tapes: 0
+blank: _
+alphabet: {0, _}
+input: ""
+start: q0
+
+state q0:
+`, ['VALIDATION_TAPES_RANGE']);
+  });
+
+  it('reports missing tape count values', () => {
+    expectDiagnosticCodes(`tapes:
+blank: _
+input: ""
+start: q0
+
+state q0:
+`, ['PARSE_UNEXPECTED_TOKEN']);
+  });
+
+  it('reports missing blank symbols', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank:
+input: ""
+start: q0
+
+state q0:
+`, ['PARSE_EXPECTED_SYMBOL']);
+  });
+
+  it('reports missing input strings', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+input:
+start: q0
+
+state q0:
+`, ['PARSE_UNEXPECTED_TOKEN']);
+  });
+
+  it('reports missing start names', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+input: ""
+start:
+
+state q0:
+`, ['PARSE_EXPECTED_STATE_NAME']);
+  });
+
+  it('reports missing state colons', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+input: ""
+start: q0
+
+state q0
+`, ['PARSE_UNEXPECTED_TOKEN']);
+  });
+
   it('reports blank symbols outside the alphabet', () => {
     expectDiagnosticCodes(`tapes: 1
 blank: _
 alphabet: {0, 1}
 input: "0"
+start: q0
+
+state q0:
+`, ['VALIDATION_BLANK_NOT_IN_ALPHABET']);
+  });
+
+  it('reports empty alphabets when a blank symbol is declared', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {}
+input: ""
 start: q0
 
 state q0:
@@ -243,6 +315,31 @@ state q0:
 `, ['PARSE_UNEXPECTED_TOKEN']);
   });
 
+  it('reports unclosed alphabet declarations', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0
+input: ""
+start: q0
+
+state q0:
+`, ['PARSE_UNEXPECTED_TOKEN']);
+  });
+
+  it('recovers from malformed alphabet items and continues parsing', () => {
+    const diagnostics = expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {0, @, _}
+input: ""
+start: q0
+
+state q0:
+  on _ -> move S;
+`, ['LEX_UNKNOWN_CHARACTER', 'PARSE_EXPECTED_SYMBOL']);
+
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain('PARSE_EXPECTED_SYMBOL');
+  });
+
   it('reports choose blocks without an opening brace', () => {
     expectDiagnosticCodes(`tapes: 1
 blank: _
@@ -267,6 +364,32 @@ state q0:
   on _ -> choose {
     move S;
 `, ['PARSE_UNEXPECTED_TOKEN']);
+  });
+
+  it('reports trailing tokens after choose blocks', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  on _ -> choose {
+    move S;
+  } extra
+`, ['PARSE_TRAILING_RULE_TOKENS']);
+  });
+
+  it('reports empty action tails', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  on _ ->
+`, ['PARSE_EXPECTED_ACTION']);
   });
 
   it('reports compact condition alternatives without a closing bracket', () => {
@@ -341,6 +464,18 @@ state q0:
 `, ['PARSE_UNEXPECTED_TOKEN']);
   });
 
+  it('reports missing write action semicolons before later actions', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  on _ -> write 0 move S;
+`, ['PARSE_UNEXPECTED_TOKEN']);
+  });
+
   it('reports unknown action statements', () => {
     expectDiagnosticCodes(`tapes: 1
 blank: _
@@ -389,6 +524,20 @@ state q0:
 `, ['PARSE_DUPLICATE_GOTO']);
   });
 
+  it('reports duplicate actions inside choose branches', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  on _ -> choose {
+    write 0; write _; move S;
+  }
+`, ['PARSE_DUPLICATE_WRITE']);
+  });
+
   it('reports invalid move directions', () => {
     expectDiagnosticCodes(`tapes: 1
 blank: _
@@ -399,6 +548,18 @@ start: q0
 state q0:
   on _ -> move X;
 `, ['PARSE_INVALID_DIRECTION']);
+  });
+
+  it('continues validating move arity after invalid directions', () => {
+    expectDiagnosticCodes(`tapes: 2
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  on _/_ -> move X;
+`, ['PARSE_INVALID_DIRECTION', 'VALIDATION_MOVE_PATTERN_ARITY']);
   });
 
   it('reports unquoted reserved symbols', () => {
@@ -413,6 +574,18 @@ state q0:
 `, ['PARSE_RESERVED_SYMBOL']);
   });
 
+  it('reports quoted reserved words that are still too long as symbols', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {"same", _}
+input: ""
+start: q0
+
+state q0:
+  on _ -> move S;
+`, ['VALIDATION_SYMBOL_LENGTH']);
+  });
+
   it('reports reserved state names', () => {
     expectDiagnosticCodes(`tapes: 1
 blank: _
@@ -421,6 +594,18 @@ input: ""
 start: state
 
 state state:
+`, ['PARSE_RESERVED_STATE_NAME']);
+  });
+
+  it('reports reserved goto target names during parsing', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  on _ -> move S; goto move;
 `, ['PARSE_RESERVED_STATE_NAME']);
   });
 
@@ -507,6 +692,18 @@ state q0:
 `, ['VALIDATION_TAPE_REFERENCE_RANGE']);
   });
 
+  it('reports tape reference zero as an invalid condition start', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  if t0 = _ then move S;
+`, ['PARSE_EXPECTED_TAPE_REFERENCE']);
+  });
+
   it('reports complement patterns when alphabet is missing', () => {
     expectDiagnosticCodes(`tapes: 1
 blank: _
@@ -515,6 +712,28 @@ start: q0
 
 state q0:
   on !0 -> move S;
+`, ['VALIDATION_COMPLEMENT_REQUIRES_ALPHABET']);
+  });
+
+  it('reports readable complement patterns when alphabet is missing', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+input: ""
+start: q0
+
+state q0:
+  if t1 != _ then move S;
+`, ['VALIDATION_COMPLEMENT_REQUIRES_ALPHABET']);
+  });
+
+  it('reports not-in complement patterns when alphabet is missing', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+input: ""
+start: q0
+
+state q0:
+  if t1 not in {_} then move S;
 `, ['VALIDATION_COMPLEMENT_REQUIRES_ALPHABET']);
   });
 
@@ -539,5 +758,30 @@ start: q0
 state q0:
   on word -> write other; move S;
 `, ['VALIDATION_SYMBOL_LENGTH']);
+  });
+
+  it('reports multi-character quoted transition symbols', () => {
+    expectDiagnosticCodes(`tapes: 1
+blank: _
+input: ""
+start: q0
+
+state q0:
+  on "ab" -> write "cd"; move S;
+`, ['VALIDATION_SYMBOL_LENGTH']);
+  });
+
+  it('does not expose a machine when syntax diagnostics exist', () => {
+    const diagnostics = expectDiagnosticCodes(`tapes: 1
+blank: _
+alphabet: {_, 0}
+input: ""
+start: q0
+
+state q0:
+  on _ -> move S; unexpected
+`, ['PARSE_EXPECTED_ACTION']);
+
+    expect(diagnostics.length).toBeGreaterThan(0);
   });
 });

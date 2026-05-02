@@ -44,6 +44,8 @@ export function validateAndNormalize(ast: ProgramAst): {
 
   const alphabetSet = new Set(alphabet ?? []);
   if (blank !== undefined) {
+    // Even without an alphabet header, symbols still have the DSL-level
+    // constraint of being exactly one user-visible character.
     validateSymbolLength(
       blank,
       ast.header.blank!.range,
@@ -97,6 +99,8 @@ export function validateAndNormalize(ast: ProgramAst): {
 
   if (input && alphabet) {
     for (const segment of input) {
+      // Input strings are treated as sequences of single-character tape symbols;
+      // multi-character symbols are intentionally not part of this DSL.
       for (const symbol of segment.value) {
         if (!alphabetSet.has(symbol)) {
           diagnostics.push(
@@ -114,6 +118,8 @@ export function validateAndNormalize(ast: ProgramAst): {
   const stateNames = new Set<string>();
   const duplicateStates = new Set<string>();
   for (const state of ast.states) {
+    // Duplicate states still contribute their transitions to syntax features,
+    // but they are excluded from executable normalization below.
     if (stateNames.has(state.name)) {
       duplicateStates.add(state.name);
       diagnostics.push(
@@ -157,6 +163,8 @@ export function validateAndNormalize(ast: ProgramAst): {
         blank !== undefined &&
         !duplicateStates.has(state.name)
       ) {
+        // Normalization is intentionally optimistic during this pass; the final
+        // machine is returned only if no error diagnostics exist.
         transitions.push(normalizeTransition(transition, tapes, alphabet ?? []));
       }
     }
@@ -271,6 +279,8 @@ function validateTransition(
   }
 
   if (!transition.actions.move) {
+    // Writes and gotos have defaults, but moves do not: every transition must
+    // describe how each head advances or stays.
     diagnostics.push(
       diagnostic(
         'VALIDATION_MISSING_MOVE',
@@ -367,6 +377,8 @@ function validateSymbol(
 ) {
   validateSymbolLength(symbol, range, diagnostics, 'Symbol');
 
+  // Without an alphabet header the language accepts any one-character symbol,
+  // except complement patterns which are rejected before this point.
   if (!alphabet) {
     return;
   }
@@ -406,6 +418,8 @@ function normalizeTransition(
   tapes: number,
   alphabet: string[],
 ): NormalizedTransition {
+  // At this boundary the AST stops being source-oriented and becomes the shape
+  // a simulator can execute directly.
   const read =
     transition.condition.kind === 'on'
       ? transition.condition.read

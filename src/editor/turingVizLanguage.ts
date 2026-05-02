@@ -120,6 +120,7 @@ export function registerTuringVizLanguage(monaco: MonacoApi) {
 
   monaco.languages.registerHoverProvider(LANGUAGE_ID, {
     provideHover(model, position) {
+      // Monaco positions are already 1-based, matching the domain source ranges.
       const message = getSemanticHover(
         model.getValue(),
         position.lineNumber,
@@ -161,6 +162,8 @@ function toMarker(
   monaco: MonacoApi,
   diagnostic: Diagnostic,
 ): Monaco.editor.IMarkerData {
+  // Monaco requires a non-empty marker span; some recovery diagnostics are
+  // naturally zero-width, so the end column is widened when necessary.
   return {
     severity:
       diagnostic.severity === 'warning'

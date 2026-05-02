@@ -39,6 +39,8 @@ export function getSemanticHover(
   line: number,
   column: number,
 ): string | undefined {
+  // Hover is deliberately derived from a fresh parse instead of cached editor
+  // state, so tests and non-Monaco callers observe the same behavior.
   const parsed = parseTuringMachine(source);
   const token = findTokenAt(parsed.tokens, line, column);
 
