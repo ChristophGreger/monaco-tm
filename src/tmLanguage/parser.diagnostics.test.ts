@@ -39,7 +39,6 @@ input ""
 start q0
 
 state q0:
-  halt
 `, ['PARSE_DUPLICATE_HEADER']);
   });
 
@@ -51,13 +50,11 @@ input ""
 start q0
 
 state q0:
-  halt
 `, ['PARSE_TRAILING_HEADER_TOKENS']);
   });
 
   it('reports missing required headers', () => {
     expectDiagnosticCodes(`state q0:
-  halt
 `, [
       'VALIDATION_MISSING_HEADER',
     ]);
@@ -71,7 +68,6 @@ input ""
 start q0
 
 state q0:
-  halt
 `, ['VALIDATION_TAPES_RANGE']);
   });
 
@@ -83,7 +79,6 @@ input "0"
 start q0
 
 state q0:
-  halt
 `, ['VALIDATION_BLANK_NOT_IN_ALPHABET']);
   });
 
@@ -95,7 +90,6 @@ input "0"
 start q0
 
 state q0:
-  halt
 `, ['VALIDATION_DUPLICATE_ALPHABET_SYMBOL']);
   });
 
@@ -107,7 +101,6 @@ input "10" | "" | ""
 start q0
 
 state q0:
-  halt
 `, ['VALIDATION_INPUT_TAPE_COUNT']);
   });
 
@@ -119,7 +112,6 @@ input "1"
 start q0
 
 state q0:
-  halt
 `, ['VALIDATION_INPUT_SYMBOL']);
   });
 
@@ -131,7 +123,6 @@ input ""
 start missing
 
 state q0:
-  halt
 `, ['VALIDATION_UNKNOWN_START_STATE']);
   });
 
@@ -143,49 +134,9 @@ input ""
 start q0
 
 state q0:
-  halt
 
 state q0:
-  halt
 `, ['VALIDATION_DUPLICATE_STATE']);
-  });
-
-  it('reports halt states that also contain transitions', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
-
-state q0:
-  halt
-  on _ -> move S;
-`, ['VALIDATION_HALT_HAS_TRANSITIONS']);
-  });
-
-  it('reports duplicate halt declarations', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
-
-state q0:
-  halt
-  halt
-`, ['PARSE_DUPLICATE_HALT']);
-  });
-
-  it('reports trailing tokens after halt', () => {
-    expectDiagnosticCodes(`tapes 1
-blank _
-alphabet {_, 0}
-input ""
-start q0
-
-state q0:
-  halt now
-`, ['PARSE_TRAILING_RULE_TOKENS']);
   });
 
   it('reports unknown rules inside a state', () => {
@@ -378,7 +329,6 @@ input ""
 start state
 
 state state:
-  halt
 `, ['PARSE_RESERVED_STATE_NAME']);
   });
 
@@ -390,7 +340,6 @@ input ""
 start q0
 
 state 1:
-  halt
 `, ['PARSE_EXPECTED_STATE_NAME']);
   });
 

@@ -19,10 +19,8 @@ state scan:
   }
 
 state accept:
-  halt
 
 state reject:
-  halt
 `);
 
     expect(machine).toMatchObject({
@@ -31,7 +29,6 @@ state reject:
       input: ['10', ''],
       start: 'scan',
       states: ['scan', 'accept', 'reject'],
-      haltStates: ['accept', 'reject'],
     });
     expect(machine.transitions).toHaveLength(3);
     expect(machine.transitions[1]).toMatchObject({
@@ -54,7 +51,6 @@ state q0:
   on 1/_/_ -> move S/S/S; goto done;
 
 state done:
-  halt
 `);
 
     expect(machine.input).toEqual(['10', '_', '_']);
@@ -138,7 +134,6 @@ state q0:
   if t1 != 0 and t2 in {0,1} and any t4 then move R/S/L/S; goto q1;
 
 state q1:
-  halt
 `);
 
     expect(machine.transitions[0].read).toEqual([
@@ -163,7 +158,6 @@ state generate:
   }
 
 state done:
-  halt
 `);
 
     expect(machine.transitions).toHaveLength(2);
@@ -185,7 +179,6 @@ state generate:
   on _ -> write 1; move S; goto done;
 
 state done:
-  halt
 `);
 
     expect(machine.transitions).toHaveLength(2);
@@ -235,7 +228,6 @@ state q0:
   if t1 = _ and any t2 then move S/S; goto done;
 
 state done:
-  halt
 `);
 
     expect(machine.alphabet).toEqual([]);

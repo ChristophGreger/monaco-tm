@@ -9,7 +9,7 @@ import {
 } from '../editor/turingVizLanguage';
 
 // The editor opens with a representative program so language features are
-// visible immediately: multi-tape reads, readable conditions, and a halt state.
+// visible immediately: multi-tape reads, readable conditions, and a terminal state.
 const initialCode = `tapes 4
 blank _
 alphabet {0, 1, #, _}
@@ -24,7 +24,6 @@ state q1:
   on */*/1/0 -> move S/R/S/L; goto q0;
 
 state accept:
-  halt
 `;
 
 export function MonacoLoader() {

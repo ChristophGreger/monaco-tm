@@ -50,7 +50,6 @@ export function registerTuringVizLanguage(monaco: MonacoApi) {
       'input',
       'start',
       'state',
-      'halt',
       'on',
       'if',
       'then',
@@ -77,7 +76,7 @@ export function registerTuringVizLanguage(monaco: MonacoApi) {
         [/"/, 'string', '@string'],
         [/\b(tapes|blank|alphabet|input|start|state)\b/, 'keyword.header'],
         [
-          /\b(on|if|then|and|or|not|in|any|write|move|goto|same|choose|halt)\b/,
+          /\b(on|if|then|and|or|not|in|any|write|move|goto|same|choose)\b/,
           'keyword',
         ],
         [/\b[LRS]\b/, { cases: { '@directions': 'type.identifier', '@default': '' } }],

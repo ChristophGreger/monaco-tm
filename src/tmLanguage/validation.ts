@@ -126,16 +126,6 @@ export function validateAndNormalize(ast: ProgramAst): {
   // Transition validation and normalization happen in one pass so the final
   // machine is ready when no errors were reported.
   for (const state of ast.states) {
-    if (state.halt && state.transitions.length > 0) {
-      diagnostics.push(
-        diagnostic(
-          'VALIDATION_HALT_HAS_TRANSITIONS',
-          `Halt state \`${state.name}\` cannot contain transitions.`,
-          state.halt,
-        ),
-      );
-    }
-
     for (const transition of state.transitions) {
       validateTransition(
         transition,
@@ -175,9 +165,6 @@ export function validateAndNormalize(ast: ProgramAst): {
       input: normalizeInput(input.map((segment) => segment.value), tapes, blank),
       start,
       states: ast.states.map((state) => state.name),
-      haltStates: ast.states
-        .filter((state) => Boolean(state.halt))
-        .map((state) => state.name),
       transitions,
     },
   };

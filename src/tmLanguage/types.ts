@@ -80,7 +80,6 @@ export interface StateBlock {
   name: string;
   range: SourceRange;
   nameRange: SourceRange;
-  halt?: SourceRange;
   transitions: Transition[];
 }
 
@@ -124,7 +123,6 @@ export interface MachineProgram {
   input: string[];
   start: string;
   states: string[];
-  haltStates: string[];
   transitions: NormalizedTransition[];
 }
 

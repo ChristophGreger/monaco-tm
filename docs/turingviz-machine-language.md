@@ -29,7 +29,6 @@ state q1:
   on */*/1/0 -> move S/R/S/L; goto q0;
 
 state accept:
-  halt
 ```
 
 ## 2. Source Text
@@ -37,8 +36,7 @@ state accept:
 ### 2.1 Whitespace
 
 Spaces, tabs, and carriage returns are ignored outside string literals.
-Newlines are significant because each header, transition, and `halt` declaration
-is line-oriented.
+Newlines are significant because each header and transition is line-oriented.
 
 Indentation inside state blocks is recommended but has no semantic meaning.
 
@@ -136,7 +134,6 @@ alphabet
 input
 start
 state
-halt
 on
 if
 then
@@ -295,19 +292,14 @@ The block continues until the next `state` declaration or the end of the file.
 
 Duplicate state names are invalid.
 
-## 7. Halt States
+## 7. Terminal States
 
-A state may be marked as halting:
+A state with no transitions is terminal. Execution cannot continue from that
+state because no outgoing transition can match.
 
 ```txt
 state accept:
-  halt
 ```
-
-A halt state must not contain transitions. A state with `halt` and any `on` or
-`if` transition is invalid.
-
-Duplicate `halt` declarations in the same state are invalid.
 
 ## 8. Transitions
 
@@ -613,8 +605,6 @@ A program is invalid if any of the following applies:
 - the start state is not declared.
 - a `goto` target state is not declared.
 - a state is declared more than once.
-- a halt state contains transitions.
-- a state contains duplicate `halt` declarations.
 - a compact `on` read pattern does not contain exactly one matcher per tape.
 - a `write` pattern does not contain exactly one value per tape.
 - a `move` pattern does not contain exactly one direction per tape.

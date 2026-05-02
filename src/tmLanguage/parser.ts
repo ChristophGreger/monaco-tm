@@ -275,23 +275,6 @@ function parseState(state: ParserState, stateKeyword: Token) {
       break;
     }
 
-    if (matchWord(state, 'halt')) {
-      const haltToken = previous(state);
-      if (stateBlock.halt) {
-        state.diagnostics.push(
-          diagnostic(
-            'PARSE_DUPLICATE_HALT',
-            'This state already has a halt declaration.',
-            haltToken.range,
-          ),
-        );
-      }
-      stateBlock.halt = haltToken.range;
-      rejectTrailingRuleTokens(state);
-      consumeNewline(state);
-      continue;
-    }
-
     if (matchWord(state, 'on')) {
       parseOnTransition(state, stateBlock, previous(state));
       continue;
@@ -305,7 +288,7 @@ function parseState(state: ParserState, stateKeyword: Token) {
     state.diagnostics.push(
       diagnostic(
         'PARSE_EXPECTED_RULE',
-        'Expected `halt`, `on`, or `if` inside this state.',
+        'Expected `on` or `if` inside this state.',
         tokenRange(peek(state)),
       ),
     );
